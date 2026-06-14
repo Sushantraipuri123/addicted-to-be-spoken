@@ -1,0 +1,775 @@
+/**
+ * ATBS — Addicted to be spoken
+ * Professional / futuristic shell on legacy Garment DOM.
+ * Loaded last (before </body>) so it overrides inline styles.
+ *
+ * Layout note: `.personalize` already sits below `#tv3`. Tab bar + side panels
+ * share one column; only `--atbs-tabs-h` offsets panel content (not header again).
+ */
+
+:root {
+  --atbs-bg0: #f4f4f7;
+  --atbs-bg1: #ececf2;
+  --atbs-surface: rgba(255, 255, 255, 0.92);
+  --atbs-surface-solid: #ffffff;
+  --atbs-border: rgba(0, 0, 0, 0.08);
+  --atbs-border-strong: rgba(0, 0, 0, 0.14);
+  --atbs-text: #0a0a0a;
+  --atbs-muted: #5c5c66;
+  --atbs-accent: #111827;
+  --atbs-accent-hover: #000000;
+  --atbs-hover: #374151;
+  --atbs-header-h: 56px;
+  --atbs-tabs-h: 52px;
+  /* inset from top of .personalize for scrollable column content (below tab bar) */
+  --atbs-col-pad-top: var(--atbs-tabs-h);
+  --atbs-sidebar-w: 420px;
+  --atbs-sidebar-w-md: 360px;
+  --atbs-sidebar-w-sm: 320px;
+  --atbs-rail-min: 80px;
+  --hover-color: #000000;
+  --atbs-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Inter", "Helvetica Neue",
+    Arial, sans-serif;
+  --atbs-display: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Syne", "Helvetica Neue",
+    Arial, sans-serif;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+}
+
+body.popup.man {
+  color: var(--atbs-text) !important;
+  background: linear-gradient(165deg, var(--atbs-bg0) 0%, var(--atbs-bg1) 55%, #e4e4ea 100%) fixed !important;
+  font-family: var(--atbs-font) !important;
+}
+
+body a {
+  color: var(--atbs-text) !important;
+}
+
+body a:hover {
+  color: var(--atbs-hover) !important;
+}
+
+/* --- Top bar ----------------------------------------------------------- */
+#tv3 {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 200000 !important;
+  height: var(--atbs-header-h) !important;
+  overflow: visible !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(16px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.4) !important;
+  border-bottom: 1px solid var(--atbs-border) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset !important;
+}
+
+#tv3 .main {
+  position: relative !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 20px !important;
+  box-sizing: border-box !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#tv3 .box_burguer,
+#tv3 .burguer,
+#tv3 .menus,
+#tv3 .menus.active,
+#tv3 #cart-trigger,
+#tv3 .customer,
+#tv3 .rlinks .region {
+  display: none !important;
+}
+
+#tv3 .rlinks {
+  flex: 0 !important;
+  min-width: 0 !important;
+}
+
+#tv3 a.logo {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  margin: 0 !important;
+  text-decoration: none !important;
+  position: relative !important;
+}
+
+#tv3 a.logo img {
+  display: block !important;
+  height: clamp(22px, 4.2vw, 32px) !important;
+  width: auto !important;
+  max-width: min(200px, 42vw) !important;
+  object-fit: contain !important;
+}
+
+#tv3 a.logo::before,
+#tv3 a.logo::after {
+  content: none !important;
+  display: none !important;
+}
+
+#tv3 a,
+#tv3 a:hover,
+#tv3 a.sales,
+#tv3 a.sales:hover {
+  color: var(--atbs-text) !important;
+}
+
+/* --- Main canvas ------------------------------------------------------- */
+.personalize.man_jacket {
+  top: var(--atbs-header-h) !important;
+  background: transparent !important;
+}
+
+.sidebar-options {
+  background: transparent !important;
+}
+
+/* --- Step tabs: segmented control (Fabric / Style / Accents) ------------ */
+.menu_principal,
+.menu_principal.fabric,
+.menu_principal.config,
+.menu_principal.extra {
+  position: absolute !important;
+  left: 0 !important;
+  right: auto !important;
+  top: 0 !important;
+  width: 100% !important;
+  max-width: var(--atbs-sidebar-w) !important;
+  min-height: var(--atbs-tabs-h) !important;
+  height: auto !important;
+  z-index: 120000 !important;
+  overflow: visible !important;
+  margin: 0 !important;
+  padding: 12px 14px 14px !important;
+  box-sizing: border-box !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(10px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(1.2) !important;
+  border-bottom: 1px solid var(--atbs-border) !important;
+}
+
+.menu_principal .options {
+  position: relative !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  gap: 0 !important;
+  padding: 3px !important;
+  box-sizing: border-box !important;
+  background: #eef0f3 !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.75) !important;
+}
+
+.menu_principal .options .option {
+  flex: 1 1 0 !important;
+  margin: 0 !important;
+  opacity: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  border-radius: 11px !important;
+  box-sizing: border-box !important;
+  background: transparent !important;
+  min-height: 40px !important;
+  cursor: pointer !important;
+  transition: background 0.22s cubic-bezier(0.4, 0, 0.2, 1), color 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.menu_principal .options .option:not(.active) {
+  opacity: 1 !important;
+}
+
+.menu_principal .options .option:not(.active) .title {
+  color: #6b7280 !important;
+}
+
+.menu_principal .options .option.active {
+  opacity: 1 !important;
+  background: #111827 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.12) inset !important;
+  transform: translateZ(0) !important;
+}
+
+.menu_principal .options .option:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.55) !important;
+}
+
+.menu_principal .options .option:hover:not(.active) .title {
+  color: #374151 !important;
+}
+
+.menu_principal .options .option.active:active {
+  transform: scale(0.98) !important;
+}
+
+.menu_principal .options .option:focus-visible {
+  outline: 2px solid #111827 !important;
+  outline-offset: 2px !important;
+}
+
+.menu_principal .option.step .image_opt_text > span {
+  display: none !important;
+}
+
+.menu_principal .option.step .image_opt_text {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.menu_principal .options .option .title {
+  margin-top: 0 !important;
+  font-family: var(--atbs-font) !important;
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: var(--atbs-text) !important;
+}
+
+.menu_principal .options .option.active .title {
+  color: #fff !important;
+}
+
+@media (max-width: 1320px) {
+  .menu_principal,
+  .menu_principal.fabric,
+  .menu_principal.config,
+  .menu_principal.extra {
+    max-width: var(--atbs-sidebar-w-md) !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .menu_principal,
+  .menu_principal.fabric,
+  .menu_principal.config,
+  .menu_principal.extra {
+    max-width: var(--atbs-sidebar-w-sm) !important;
+  }
+}
+
+/* --- Style / Accents: fixed column width + legacy scroll geometry -------- */
+/*
+ * Garment expects: .box_opts { position:absolute; top:0; bottom:0; background:#fff }
+ * and .box_opt { overflow-y:hidden }. Setting .box_opts to static broke panel
+ * positioning and scroll. Rail (.container_options) stays above via z-index.
+ */
+#config.active,
+#extra.active {
+  display: block !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: var(--atbs-sidebar-w) !important;
+  max-width: min(var(--atbs-sidebar-w), 100vw) !important;
+  box-sizing: border-box !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+  border-right: 1px solid var(--atbs-border-strong) !important;
+}
+
+@media (max-width: 1320px) {
+  #config.active,
+  #extra.active {
+    width: var(--atbs-sidebar-w-md) !important;
+    max-width: min(var(--atbs-sidebar-w-md), 100vw) !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  #config.active,
+  #extra.active {
+    width: var(--atbs-sidebar-w-sm) !important;
+    max-width: min(var(--atbs-sidebar-w-sm), 100vw) !important;
+  }
+}
+
+/* Full-height sheet behind detail panels; scrolls when content is tall */
+#config.active > .box_opts,
+#extra.active > .box_opts {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: var(--atbs-col-pad-top) !important;
+  bottom: 0 !important;
+  background: #ffffff !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  z-index: 1 !important;
+}
+
+/* Icon rail above .box_opts */
+#config.active .container_options,
+#extra.active .container_options {
+  top: var(--atbs-col-pad-top) !important;
+  bottom: 0 !important;
+  z-index: 100050 !important;
+  background: #f6f6f8 !important;
+  border-right: 1px solid var(--atbs-border-strong) !important;
+  box-shadow: 2px 0 0 rgba(0, 0, 0, 0.03) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Active detail panel: allow vertical scroll (legacy used overflow-y:hidden) */
+#config.active .box_opt,
+#extra.active .box_opt {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* When rail is collapsed, fill remaining width so no “thin white strip” gap */
+#config.active .container_options.min ~ .box_opts .box_opt.active,
+#extra.active .container_options.min ~ .box_opts .box_opt.active {
+  width: calc(100% - var(--atbs-rail-min)) !important;
+  max-width: calc(100% - var(--atbs-rail-min)) !important;
+  box-sizing: border-box !important;
+}
+
+#config.active .container_options:not(.min) ~ .box_opts .box_opt.active,
+#extra.active .container_options:not(.min) ~ .box_opts .box_opt.active {
+  width: 100% !important;
+  max-width: 100% !important;
+  left: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* --- Style / Accents: legible type (legacy gray on white) ---------------- */
+#config.active .option_trigger .text,
+#extra.active .option_trigger .text,
+#config.active .box_opt .text,
+#extra.active .box_opt .text,
+#config.active .box_opt .title,
+#extra.active .box_opt .title,
+#config.active .box_opt p.title,
+#extra.active .box_opt p.title {
+  color: var(--atbs-text) !important;
+  opacity: 1 !important;
+}
+
+#config.active .option_trigger,
+#extra.active .option_trigger {
+  color: var(--atbs-text) !important;
+}
+
+#config.active .option_trigger:not(.active),
+#extra.active .option_trigger:not(.active) {
+  opacity: 0.92 !important;
+}
+
+#config.active .subbox_opt .title,
+#extra.active .subbox_opt .title {
+  color: var(--atbs-muted) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  font-size: 0.65rem !important;
+}
+
+#fabric.active {
+  top: 0 !important;
+  bottom: 0 !important;
+  width: var(--atbs-sidebar-w) !important;
+  max-width: min(var(--atbs-sidebar-w), 100vw) !important;
+  padding-top: var(--atbs-col-pad-top) !important;
+  box-sizing: border-box !important;
+  background: #ffffff !important;
+  border-right: 1px solid var(--atbs-border-strong) !important;
+}
+
+@media (max-width: 1320px) {
+  #fabric.active {
+    width: var(--atbs-sidebar-w-md) !important;
+    max-width: min(var(--atbs-sidebar-w-md), 100vw) !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  #fabric.active {
+    width: var(--atbs-sidebar-w-sm) !important;
+    max-width: min(var(--atbs-sidebar-w-sm), 100vw) !important;
+  }
+}
+
+#fabric.active .header_fabrics {
+  border-bottom: 1px solid var(--atbs-border) !important;
+  background: var(--atbs-surface-solid) !important;
+}
+
+/* Search + filter row — calmer, one rhythm */
+#fabric .header_fabrics .row.action .input_search input,
+#fabric .input_search input {
+  border-radius: 10px !important;
+  border: 1px solid var(--atbs-border-strong) !important;
+  background: #fafafa !important;
+  font-family: var(--atbs-font) !important;
+  min-height: 40px !important;
+  box-shadow: none !important;
+}
+
+#fabric .bton,
+.filters .bton {
+  border-radius: 10px !important;
+  border: 1px solid var(--atbs-border-strong) !important;
+  background: #fff !important;
+}
+
+/* Fabric toolbar: Filters + Hide — black control, white label (hover stays legible) */
+#fabric .header_fabrics .row.action .bton.filter,
+#fabric .header_fabrics .row.action .bton.apply {
+  background: #111827 !important;
+  border-color: #111827 !important;
+  color: #fff !important;
+}
+
+#fabric .header_fabrics .row.action .bton.filter .text,
+#fabric .header_fabrics .row.action .bton.apply .text,
+#fabric .header_fabrics .row.action .bton.filter span,
+#fabric .header_fabrics .row.action .bton.apply span {
+  color: #fff !important;
+}
+
+#fabric .header_fabrics .row.action .bton.filter:hover,
+#fabric .header_fabrics .row.action .bton.filter:focus-visible,
+#fabric .header_fabrics .row.action .bton.apply:hover,
+#fabric .header_fabrics .row.action .bton.apply:focus-visible {
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
+}
+
+#fabric .header_fabrics .row.action .bton.filter:hover .text,
+#fabric .header_fabrics .row.action .bton.apply:hover .text,
+#fabric .header_fabrics .row.action .bton.filter:hover span,
+#fabric .header_fabrics .row.action .bton.apply:hover span {
+  color: #fff !important;
+}
+
+#fabric .header_fabrics .row.action .bton.filter img,
+#fabric .header_fabrics .row.action .bton.apply img {
+  filter: brightness(0) invert(1) !important;
+  opacity: 0.92 !important;
+}
+
+/* Fabric tab: two swatches per row (legacy used fixed .fabric_box width ≈3 cols) */
+#fabric .fabric_list,
+#fabric.active .fabric_list {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px 14px !important;
+  align-content: start !important;
+  width: calc(100% - 16px) !important;
+  max-width: none !important;
+  margin-left: 8px !important;
+  margin-right: 8px !important;
+  box-sizing: border-box !important;
+}
+
+#fabric .fabric_list .fabric_box {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  float: none !important;
+  box-sizing: border-box !important;
+}
+
+/* --- Preview: reserve space for floating summary ------------------------ */
+#available_window.image_render.man_jacket {
+  padding-bottom: min(260px, 32vh) !important;
+  box-sizing: border-box !important;
+}
+
+/* --- Right summary: Custom jacket, price, Next (floating card) ---------- */
+.personalize.man_jacket .action_column,
+.personalize .action_column {
+  position: fixed !important;
+  right: max(16px, env(safe-area-inset-right)) !important;
+  bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  top: auto !important;
+  left: auto !important;
+  height: auto !important;
+  width: min(320px, calc(100vw - var(--atbs-sidebar-w) - 40px)) !important;
+  max-width: min(320px, calc(100vw - var(--atbs-sidebar-w) - 40px)) !important;
+  z-index: 110000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  align-items: stretch !important;
+  text-align: left !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-sizing: border-box !important;
+}
+
+.personalize .action_column .right {
+  display: none !important;
+}
+
+.personalize .action_column .left {
+  width: 100% !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 48px rgba(17, 24, 39, 0.1), 0 1px 0 rgba(255, 255, 255, 0.95) inset !important;
+  padding: 24px 22px 22px !important;
+  box-sizing: border-box !important;
+}
+
+.personalize .action_column .product {
+  margin: 0 !important;
+}
+
+.personalize .action_column .product h1,
+.personalize .action_column .product h1 span {
+  color: #111827 !important;
+  font-family: var(--atbs-font) !important;
+  font-weight: 600 !important;
+  font-size: 1.35rem !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.2 !important;
+  text-align: left !important;
+  margin: 0 0 4px !important;
+  text-transform: none !important;
+}
+
+.personalize .action_column .price_original {
+  color: #9ca3af !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  text-decoration: line-through !important;
+  margin: 0 0 2px !important;
+}
+
+.personalize .action_column .price {
+  position: relative !important;
+  margin: 12px 0 0 !important;
+  padding: 16px 0 0 !important;
+  border-top: 1px solid #f3f4f6 !important;
+  color: #111827 !important;
+  font-variant-numeric: tabular-nums !important;
+  font-size: 2.125rem !important;
+  line-height: 1.05 !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.04em !important;
+}
+
+.personalize .action_column .price::before {
+  content: "Total" !important;
+  display: block !important;
+  font-size: 0.65rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  color: #6b7280 !important;
+  margin: 0 0 8px !important;
+}
+
+.personalize .action_column .price.discount {
+  color: #111827 !important;
+}
+
+.personalize .action_column .vat_included,
+.personalize .action_column .receive_it,
+.personalize .action_column .free_shipping {
+  color: #6b7280 !important;
+  font-size: 0.75rem !important;
+  line-height: 1.45 !important;
+  margin-top: 10px !important;
+  text-align: left !important;
+}
+
+.personalize .action_column .vat_included.us {
+  cursor: pointer !important;
+}
+
+.personalize .action_column .vat_included.us:hover {
+  color: #111827 !important;
+}
+
+.personalize .action_column .next {
+  margin-top: 20px !important;
+  width: 100% !important;
+}
+
+.action_column .next .step_next,
+.action_column .right .next .step_next {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-height: 50px !important;
+  padding: 0 18px !important;
+  box-sizing: border-box !important;
+  background: #111827 !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  border: 1px solid #111827 !important;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.2) !important;
+  font-family: var(--atbs-font) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  font-size: 0.72rem !important;
+  text-decoration: none !important;
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease !important;
+}
+
+.action_column .next .step_next:hover,
+.action_column .right .next .step_next:hover {
+  background: #000 !important;
+  color: #fff !important;
+  border-color: #000 !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28) !important;
+  transform: translateY(-1px) !important;
+}
+
+.action_column .next .step_next span,
+.action_column .right .next .step_next span {
+  color: inherit !important;
+}
+
+.personalize_popup .button_ok,
+.seersucker_warning .button_ok,
+.quilted_waistcoat_alert .button_ok,
+.popup_warning_fabric_out .button_ok {
+  background: #111827 !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+}
+
+.skin_tone .apply_button,
+.apply_button {
+  background: #111827 !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+}
+
+/* --- Option tiles / typography ---------------------------------------- */
+.personalize .option_trigger .text,
+.personalize .box_opt .title,
+.personalize .box_opt p.title {
+  font-family: var(--atbs-font) !important;
+}
+
+.personalize .option_trigger {
+  border-radius: 12px !important;
+  transition: background 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.personalize .option_trigger:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+#fabric .show_results .not_zero,
+.filters .show_results .detail.number {
+  color: var(--atbs-text) !important;
+}
+
+.personalize .tags .tag {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: var(--atbs-text) !important;
+  border: 1px solid var(--atbs-border) !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+}
+
+.options_render li a .title {
+  color: var(--atbs-muted) !important;
+}
+
+.share_and_fav {
+  display: none !important;
+}
+
+/* Fabric filter drawer — same column as tabs */
+.personalize .filters.fabric_step.active,
+.personalize .filters.extra_step.active {
+  top: var(--atbs-col-pad-top) !important;
+}
+
+/* --- #tv3 inner step strip (if used) ----------------------------------- */
+#tv3 .step a {
+  color: var(--atbs-muted) !important;
+  border-bottom: 2px solid transparent !important;
+}
+
+#tv3 .step a.active {
+  color: var(--atbs-text) !important;
+  border-bottom-color: var(--atbs-accent) !important;
+}
+
+#tv3 .step a:hover {
+  color: var(--atbs-text) !important;
+}
+
+/* Filter “Show results” strip — no brand orange */
+.personalize .filters .show_results,
+.personalize #fabric .show_results {
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+/* --- Fabric cards: neutral badges (no red / terracotta promo chips) ----- */
+#fabric .fabric_box div.ico-new,
+#fabric .fabric_box div.ico-new p {
+  background-color: #111827 !important;
+  color: #fff !important;
+}
+
+#fabric .fabric_box div.ico-dsc {
+  background: #111827 !important;
+  color: #fff !important;
+}
+
+#fabric .fabric_box div.ico-dsc.price_bf {
+  background: transparent !important;
+  color: #6b7280 !important;
+}
+
+#fabric .fabric_box .super_shiny,
+#fabric .fabric_box .stretchy {
+  color: #6b7280 !important;
+}
+
+@media (max-width: 1024px) {
+  .personalize.man_jacket .action_column,
+  .personalize .action_column {
+    width: min(300px, calc(100vw - var(--atbs-sidebar-w-sm) - 24px)) !important;
+    max-width: min(300px, calc(100vw - var(--atbs-sidebar-w-sm) - 24px)) !important;
+  }
+}
+
+/* Demo / shell: cap visible swatches in fabric grid (see atbs-demo.js) */
+#fabric .fabric_list .fabric_box.atbs-fabric-hidden {
+  display: none !important;
+}
