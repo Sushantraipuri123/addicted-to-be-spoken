@@ -3,7 +3,7 @@ export default function PersonalizePage() {
     <iframe
       title="Custom jacket personalize"
       src="/en-us/men/custom-jackets/personalize.html"
-      style={{
+      style={{ 
         width: "100%",
         height: "100vh",
         border: 0,
