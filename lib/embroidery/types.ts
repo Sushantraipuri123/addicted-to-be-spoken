@@ -4,13 +4,21 @@ export type BlazerLayer = {
   className?: string;
 };
 
+export type EmbroideryView = "front" | "back";
+
 export type EmbroiderySelection = {
   designId: string;
   src: string;
+  placementId: string;
+  custom?: {
+    left: string;
+    top: string;
+    width: string;
+  };
 };
 
 export type BlazerDraft = {
-  version: 1;
+  version: 2;
   savedAt: number;
   current: Record<string, unknown>;
   layers: {

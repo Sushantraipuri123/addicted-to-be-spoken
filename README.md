@@ -6,15 +6,15 @@ Single-route Next.js wrapper around the legacy Hockerty **custom jackets persona
 
 ## Requirements
 
-- Sibling folder **`../horkey`** (repo root layout: `addicte-be-spoken/horkey`, `addicte-be-spoken/jacket-configurator`).
+- Node.js 18+ and `npm install` in this folder only. Legacy static assets (CSS, JS, 3D layers, fonts, fabric feeds) are **vendored under `public/`** — no sibling `horkey` repo is required.
 
 ## Scripts
 
 | Command | Purpose |
 |--------|---------|
-| `npm run sync:legacy` | Copy CSS, JS, 3D, fonts, feeds, conversion script from `horkey/` into `public/`, then patch personalize HTML paths. |
-| `npm run dev` | Runs `sync:legacy` first (`predev`), then `next dev`. |
-| `npm run build` | Runs `sync:legacy` first (`prebuild`), then `next build`. |
+| `npm run dev` | Start Next.js dev server (`next dev`). |
+| `npm run build` | Production build. |
+| `npm run patch:personalize` | Re-apply path + ATBS patches to `public/en-us/men/custom-jackets/personalize.html` after replacing that file from an upstream mirror. |
 
 ## Parity checklist (manual QA)
 

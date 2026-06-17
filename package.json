@@ -3,9 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "sync:legacy": "node scripts/sync-legacy.mjs && node scripts/patch-personalize.mjs",
-    "predev": "npm run sync:legacy",
-    "prebuild": "npm run sync:legacy",
+    "patch:personalize": "node scripts/patch-personalize.mjs",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
