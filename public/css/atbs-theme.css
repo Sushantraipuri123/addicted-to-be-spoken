@@ -773,3 +773,23 @@ body a:hover {
 #fabric .fabric_list .fabric_box.atbs-fabric-hidden {
   display: none !important;
 }
+
+/* Step 4 — Embroidery tab (disabled until user continues from Accents) */
+.menu_principal .options .option.atbs-step-embroidery {
+  pointer-events: none !important;
+  opacity: 0.45 !important;
+}
+
+.menu_principal .options .option.atbs-step-embroidery .title {
+  font-size: 0.72rem !important;
+}
+
+.menu_principal.extra .options .option.atbs-step-embroidery {
+  opacity: 0.65 !important;
+}
+
+@media (max-width: 1100px) {
+  .menu_principal .options .option .title {
+    font-size: 0.68rem !important;
+  }
+}
