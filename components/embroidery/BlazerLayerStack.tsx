@@ -3,8 +3,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import type { BlazerLayer, EmbroiderySelection } from "@/lib/embroidery/types";
+import type {
+  BlazerLayer,
+  EmbroiderySelection,
+  EmbroideryView,
+} from "@/lib/embroidery/types";
 import { filterJacketOnlyLayers } from "@/lib/embroidery/jacket-only-layers";
+import { getOccupiedPlacementIds } from "@/lib/embroidery/limits";
 import {
   EMBROIDERY_PLACEMENTS,
   getEmbroideryPlacementById,
@@ -13,11 +18,15 @@ import { MirrorLayerImg } from "./MirrorLayerImg";
 
 type BlazerLayerStackProps = {
   layers: BlazerLayer[];
-  embroidery?: EmbroiderySelection;
-  view: "front" | "back";
+  embroideries: EmbroiderySelection[];
+  view: EmbroideryView;
   hasDesignSelected: boolean;
+  activePlacementId?: string;
   onHotspotSelect: (placementId: string) => void;
-  onBackAdjust: (custom: { left: string; top: string; width: string }) => void;
+  onBackAdjust: (
+    placementId: string,
+    custom: { left: string; top: string; width: string }
+  ) => void;
 };
 
 type Geometry = {
@@ -67,15 +76,47 @@ function geometryEquals(a: Geometry | null, b: Geometry | null): boolean {
   return a.left === b.left && a.top === b.top && a.width === b.width;
 }
 
-export function BlazerLayerStack({
-  layers,
+function resolveGeometry(
+  view: EmbroideryView,
+  embroidery: EmbroiderySelection
+): Geometry | undefined {
+  const placement = getEmbroideryPlacementById(view, embroidery.placementId);
+  if (!placement) return undefined;
+
+  const fallback = {
+    left: parsePercent(placement.left),
+    top: parsePercent(placement.top),
+    width: parsePercent(placement.width),
+  };
+
+  if (view !== "back" || !embroidery.custom) {
+    return fallback;
+  }
+
+  return {
+    left: parsePercent(embroidery.custom.left),
+    top: parsePercent(embroidery.custom.top),
+    width: parsePercent(embroidery.custom.width),
+  };
+}
+
+type BackEmbroideryOverlayProps = {
+  embroidery: EmbroiderySelection;
+  geometry: Geometry;
+  zIndex: number;
+  isActive: boolean;
+  frameRef: React.RefObject<HTMLDivElement | null>;
+  onAdjust: (custom: { left: string; top: string; width: string }) => void;
+};
+
+function BackEmbroideryOverlay({
   embroidery,
-  view,
-  hasDesignSelected,
-  onHotspotSelect,
-  onBackAdjust,
-}: BlazerLayerStackProps) {
-  const frameRef = useRef<HTMLDivElement | null>(null);
+  geometry,
+  zIndex,
+  isActive,
+  frameRef,
+  onAdjust,
+}: BackEmbroideryOverlayProps) {
   const dragStartRef = useRef<{
     pointerId: number;
     startX: number;
@@ -89,65 +130,39 @@ export function BlazerLayerStack({
     initial: Geometry;
   } | null>(null);
 
-  const visibleLayers =
-    view === "back" ? filterJacketOnlyLayers(layers) : layers;
-  const sorted = [...visibleLayers].sort((a, b) => a.zIndex - b.zIndex);
-  const placements = EMBROIDERY_PLACEMENTS[view].filter(
-    (placement) => placement.enabled !== false
+  const [localGeometry, setLocalGeometry] = useState<Geometry>(() =>
+    clampGeometry(geometry)
   );
-  const selectedPlacement = getEmbroideryPlacementById(
-    view,
-    embroidery?.placementId
-  );
-  const baseGeometry = useMemo<Geometry | undefined>(() => {
-    if (!selectedPlacement) return undefined;
-    const fallback = {
-      left: parsePercent(selectedPlacement.left),
-      top: parsePercent(selectedPlacement.top),
-      width: parsePercent(selectedPlacement.width),
-    };
-    if (view !== "back" || !embroidery?.custom) return fallback;
-    return {
-      left: parsePercent(embroidery.custom.left),
-      top: parsePercent(embroidery.custom.top),
-      width: parsePercent(embroidery.custom.width),
-    };
-  }, [embroidery?.custom, selectedPlacement, view]);
-
-  const [backGeometry, setBackGeometry] = useState<Geometry | null>(null);
 
   useEffect(() => {
-    if (view !== "back" || !baseGeometry) {
-      setBackGeometry((previous) => (previous ? null : previous));
-      return;
-    }
-    const next = clampGeometry(baseGeometry);
-    setBackGeometry((previous) => (geometryEquals(previous, next) ? previous : next));
-  }, [baseGeometry, view]);
-
-  const interactiveGeometry =
-    view === "back" && backGeometry ? backGeometry : baseGeometry;
+    const next = clampGeometry(geometry);
+    setLocalGeometry((previous) =>
+      geometryEquals(previous, next) ? previous : next
+    );
+  }, [geometry]);
 
   const handleDragPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (view !== "back" || !interactiveGeometry || !frameRef.current) return;
+    if (!isActive || !frameRef.current) return;
     event.preventDefault();
     dragStartRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
-      initial: interactiveGeometry,
+      initial: localGeometry,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const handleDragPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!dragStartRef.current || !frameRef.current || view !== "back") return;
+    if (!dragStartRef.current || !frameRef.current) return;
     if (dragStartRef.current.pointerId !== event.pointerId) return;
 
     const rect = frameRef.current.getBoundingClientRect();
-    const dxPct = ((event.clientX - dragStartRef.current.startX) / rect.width) * 100;
-    const dyPct = ((event.clientY - dragStartRef.current.startY) / rect.height) * 100;
-    setBackGeometry(
+    const dxPct =
+      ((event.clientX - dragStartRef.current.startX) / rect.width) * 100;
+    const dyPct =
+      ((event.clientY - dragStartRef.current.startY) / rect.height) * 100;
+    setLocalGeometry(
       clampGeometry({
         ...dragStartRef.current.initial,
         left: dragStartRef.current.initial.left + dxPct,
@@ -156,41 +171,48 @@ export function BlazerLayerStack({
     );
   };
 
-  const handleDragPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const finishDrag = (
+    event: ReactPointerEvent<HTMLDivElement>,
+    geometrySnapshot: Geometry
+  ) => {
     if (!dragStartRef.current) return;
     if (dragStartRef.current.pointerId !== event.pointerId) return;
     dragStartRef.current = null;
     event.currentTarget.releasePointerCapture(event.pointerId);
-    if (view === "back" && backGeometry && embroidery && selectedPlacement) {
-      onBackAdjust({
-        left: toPercent(backGeometry.left),
-        top: toPercent(backGeometry.top),
-        width: toPercent(backGeometry.width),
-      });
-    }
+    onAdjust({
+      left: toPercent(geometrySnapshot.left),
+      top: toPercent(geometrySnapshot.top),
+      width: toPercent(geometrySnapshot.width),
+    });
+  };
+
+  const handleDragPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    finishDrag(event, localGeometry);
   };
 
   const handleResizePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (view !== "back" || !interactiveGeometry || !frameRef.current) return;
+    if (!isActive || !frameRef.current) return;
     event.preventDefault();
     event.stopPropagation();
     resizeStartRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
-      initial: interactiveGeometry,
+      initial: localGeometry,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const handleResizePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (!resizeStartRef.current || !frameRef.current || view !== "back") return;
+    if (!resizeStartRef.current || !frameRef.current) return;
     if (resizeStartRef.current.pointerId !== event.pointerId) return;
     const rect = frameRef.current.getBoundingClientRect();
-    const dxPct = ((event.clientX - resizeStartRef.current.startX) / rect.width) * 100;
-    const dyPct = ((event.clientY - resizeStartRef.current.startY) / rect.height) * 100;
+    const dxPct =
+      ((event.clientX - resizeStartRef.current.startX) / rect.width) * 100;
+    const dyPct =
+      ((event.clientY - resizeStartRef.current.startY) / rect.height) * 100;
     const delta = Math.max(dxPct, dyPct);
-    setBackGeometry(
+    setLocalGeometry(
       clampGeometry({
         ...resizeStartRef.current.initial,
         width: resizeStartRef.current.initial.width + delta,
@@ -198,19 +220,84 @@ export function BlazerLayerStack({
     );
   };
 
-  const handleResizePointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const finishResize = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    geometrySnapshot: Geometry
+  ) => {
     if (!resizeStartRef.current) return;
     if (resizeStartRef.current.pointerId !== event.pointerId) return;
     resizeStartRef.current = null;
     event.currentTarget.releasePointerCapture(event.pointerId);
-    if (view === "back" && backGeometry && embroidery && selectedPlacement) {
-      onBackAdjust({
-        left: toPercent(backGeometry.left),
-        top: toPercent(backGeometry.top),
-        width: toPercent(backGeometry.width),
-      });
-    }
+    onAdjust({
+      left: toPercent(geometrySnapshot.left),
+      top: toPercent(geometrySnapshot.top),
+      width: toPercent(geometrySnapshot.width),
+    });
   };
+
+  const handleResizePointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    finishResize(event, localGeometry);
+  };
+
+  return (
+    <div
+      className={`embroidery-preview__overlay-wrap is-draggable${isActive ? " is-active" : ""}`}
+      style={{
+        zIndex,
+        left: toPercent(localGeometry.left),
+        top: toPercent(localGeometry.top),
+        width: toPercent(localGeometry.width),
+      }}
+      onPointerDown={handleDragPointerDown}
+      onPointerMove={handleDragPointerMove}
+      onPointerUp={handleDragPointerUp}
+      onPointerCancel={handleDragPointerUp}
+    >
+      <img
+        src={embroidery.src}
+        alt="Embroidery overlay"
+        className="embroidery-preview__overlay"
+        draggable={false}
+      />
+      {isActive ? (
+        <button
+          type="button"
+          className="embroidery-preview__resize"
+          aria-label="Resize embroidery"
+          onPointerDown={handleResizePointerDown}
+          onPointerMove={handleResizePointerMove}
+          onPointerUp={handleResizePointerUp}
+          onPointerCancel={handleResizePointerUp}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+export function BlazerLayerStack({
+  layers,
+  embroideries,
+  view,
+  hasDesignSelected,
+  activePlacementId,
+  onHotspotSelect,
+  onBackAdjust,
+}: BlazerLayerStackProps) {
+  const frameRef = useRef<HTMLDivElement | null>(null);
+
+  const visibleLayers =
+    view === "back" ? filterJacketOnlyLayers(layers) : layers;
+  const sorted = [...visibleLayers].sort((a, b) => a.zIndex - b.zIndex);
+  const maxLayerZ = useMemo(
+    () => sorted.reduce((max, layer) => Math.max(max, layer.zIndex), 0),
+    [sorted]
+  );
+  const embroideryBaseZ = maxLayerZ + 10;
+
+  const placements = EMBROIDERY_PLACEMENTS[view].filter(
+    (placement) => placement.enabled !== false
+  );
+  const occupiedPlacementIds = getOccupiedPlacementIds(embroideries);
 
   return (
     <div className="embroidery-preview__stack" aria-label="Blazer preview" ref={frameRef}>
@@ -222,60 +309,70 @@ export function BlazerLayerStack({
           style={{ zIndex: layer.zIndex }}
         />
       ))}
-      {!(view === "back" && embroidery) ? (
-        <div className="embroidery-preview__hotspots" aria-label="Placement markers">
-          {placements.map((placement) => {
-            const isSelected = placement.id === embroidery?.placementId;
-            return (
-              <button
-                key={placement.id}
-                type="button"
-                className={`embroidery-preview__hotspot${isSelected ? " is-selected" : ""}`}
-                style={{ left: placement.left, top: placement.top }}
-                onClick={() => onHotspotSelect(placement.id)}
-                aria-label={`Place embroidery on ${placement.label}`}
-                title={placement.label}
-                disabled={!hasDesignSelected}
-              >
-                <span aria-hidden>{placement.label.slice(0, 1)}</span>
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-      {embroidery && selectedPlacement && interactiveGeometry ? (
-        <div
-          className={`embroidery-preview__overlay-wrap${view === "back" ? " is-draggable" : ""}`}
-          style={{
-            zIndex: selectedPlacement.zIndex ?? 1000,
-            left: toPercent(interactiveGeometry.left),
-            top: toPercent(interactiveGeometry.top),
-            width: toPercent(interactiveGeometry.width),
-          }}
-          onPointerDown={handleDragPointerDown}
-          onPointerMove={handleDragPointerMove}
-          onPointerUp={handleDragPointerUp}
-          onPointerCancel={handleDragPointerUp}
-        >
-          <img
-            src={embroidery.src}
-            alt="Embroidery overlay"
-            className="embroidery-preview__overlay"
-            draggable={false}
-          />
-          {view === "back" ? (
-            <button
-              type="button"
-              className="embroidery-preview__resize"
-              aria-label="Resize embroidery"
-              onPointerDown={handleResizePointerDown}
-              onPointerMove={handleResizePointerMove}
-              onPointerUp={handleResizePointerUp}
-              onPointerCancel={handleResizePointerUp}
+      {embroideries.map((embroidery, index) => {
+        const placement = getEmbroideryPlacementById(view, embroidery.placementId);
+        const geometry = resolveGeometry(view, embroidery);
+        if (!placement || !geometry) return null;
+
+        const zIndex = embroideryBaseZ + index;
+
+        if (view === "back") {
+          return (
+            <BackEmbroideryOverlay
+              key={embroidery.id}
+              embroidery={embroidery}
+              geometry={geometry}
+              zIndex={zIndex}
+              isActive={
+                activePlacementId === embroidery.placementId ||
+                (!activePlacementId && index === embroideries.length - 1)
+              }
+              frameRef={frameRef}
+              onAdjust={(custom) => onBackAdjust(embroidery.placementId, custom)}
             />
-          ) : null}
-        </div>
-      ) : null}
+          );
+        }
+
+        return (
+          <div
+            key={embroidery.id}
+            className="embroidery-preview__overlay-wrap"
+            style={{
+              zIndex,
+              left: toPercent(geometry.left),
+              top: toPercent(geometry.top),
+              width: toPercent(geometry.width),
+            }}
+          >
+            <img
+              src={embroidery.src}
+              alt="Embroidery overlay"
+              className="embroidery-preview__overlay"
+              draggable={false}
+            />
+          </div>
+        );
+      })}
+      <div className="embroidery-preview__hotspots" aria-label="Placement markers">
+        {placements.map((placement) => {
+          const isOccupied = occupiedPlacementIds.has(placement.id);
+          const isSelected = placement.id === activePlacementId;
+          return (
+            <button
+              key={placement.id}
+              type="button"
+              className={`embroidery-preview__hotspot${isSelected ? " is-selected" : ""}${isOccupied ? " is-occupied" : ""}`}
+              style={{ left: placement.left, top: placement.top }}
+              onClick={() => onHotspotSelect(placement.id)}
+              aria-label={`Place embroidery on ${placement.label}`}
+              title={placement.label}
+              disabled={!hasDesignSelected}
+            >
+              <span aria-hidden>{placement.label.slice(0, 1)}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

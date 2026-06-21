@@ -7,6 +7,7 @@ export type BlazerLayer = {
 export type EmbroideryView = "front" | "back";
 
 export type EmbroiderySelection = {
+  id: string;
   designId: string;
   src: string;
   placementId: string;
@@ -18,7 +19,7 @@ export type EmbroiderySelection = {
 };
 
 export type BlazerDraft = {
-  version: 2;
+  version: 3;
   savedAt: number;
   current: Record<string, unknown>;
   layers: {
@@ -26,9 +27,16 @@ export type BlazerDraft = {
     back: BlazerLayer[];
   };
   embroidery?: {
-    front?: EmbroiderySelection;
-    back?: EmbroiderySelection;
+    front?: EmbroiderySelection[];
+    back?: EmbroiderySelection[];
   };
 };
 
 export const BLAZER_DRAFT_KEY = "atbs_blazer_draft";
+
+export function createEmbroiderySelectionId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `emb-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}

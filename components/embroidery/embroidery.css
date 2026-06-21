@@ -27,32 +27,12 @@
   width: auto;
 }
 
-.embroidery-studio__steps {
-  display: flex;
-  gap: 4px;
-  padding: 3px;
-  background: #eef0f3;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 14px;
-}
-
-.embroidery-studio__step {
-  padding: 8px 14px;
-  border-radius: 11px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--emb-muted);
-  white-space: nowrap;
-}
-
-.embroidery-studio__step.is-done {
+.embroidery-studio__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--emb-text);
-}
-
-.embroidery-studio__step.is-active {
-  background: #fff;
-  color: var(--emb-text);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .embroidery-studio__main {
@@ -80,6 +60,13 @@
   font-size: 0.875rem;
   color: var(--emb-muted);
   line-height: 1.45;
+}
+
+.embroidery-picker__counter {
+  margin: -12px 0 20px !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600;
+  color: var(--emb-text) !important;
 }
 
 .embroidery-picker__grid {
@@ -169,7 +156,7 @@
 .embroidery-preview__hotspots {
   position: absolute;
   inset: 0;
-  z-index: 1100;
+  z-index: 1200;
   pointer-events: none;
 }
 
@@ -211,6 +198,16 @@
   border-color: var(--emb-accent);
   background: #111827;
   color: #fff;
+}
+
+.embroidery-preview__hotspot.is-occupied:not(.is-selected) {
+  border-color: rgba(17, 24, 39, 0.45);
+  background: rgba(17, 24, 39, 0.08);
+  color: var(--emb-text);
+}
+
+.embroidery-preview__hotspot.is-occupied.is-selected {
+  box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.14);
 }
 
 .embroidery-preview__hotspot:disabled {
@@ -392,9 +389,5 @@
   .embroidery-controls__back {
     margin-top: 0;
     width: 100%;
-  }
-
-  .embroidery-studio__steps {
-    display: none;
   }
 }
