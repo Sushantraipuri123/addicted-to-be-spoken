@@ -3,7 +3,7 @@ import type { EmbroiderySelection, EmbroideryView } from "./types";
 
 export const MAX_EMBROIDERY_BY_VIEW: Record<EmbroideryView, number> = {
   front: 3,
-  back: 1,
+  back: 2,
 };
 
 export function getOccupiedPlacementIds(

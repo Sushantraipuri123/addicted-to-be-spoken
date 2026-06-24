@@ -21,13 +21,24 @@
   --atbs-hover: #374151;
   --atbs-header-h: 56px;
   --atbs-tabs-h: 52px;
-  /* inset from top of .personalize for scrollable column content (below tab bar) */
-  --atbs-col-pad-top: var(--atbs-tabs-h);
+  /* inset from top of .personalize for scrollable column content (below header) */
+  --atbs-col-pad-top: 0px;
   --atbs-sidebar-w: 420px;
-  --atbs-sidebar-w-md: 360px;
+  --atbs-sidebar-w-md: 380px;
   --atbs-sidebar-w-sm: 320px;
   --atbs-rail-min: 80px;
+  /* outer navigation rail (Fabric / Style / Accents) */
+  --atbs-rail-w: 96px;
+  /* space reserved on the right of the preview for the floating summary card,
+   * so the blazer (and its rotation arrows) never sit under the card */
+  --atbs-preview-right: 360px;
   --hover-color: #000000;
+  /* Brand yellow (sampled from logoADTB "The People's Brand" script) */
+  --atbs-yellow: #f5c518;
+  --atbs-yellow-strong: #e0ad00;
+  --atbs-yellow-soft: #fff7d6;
+  --atbs-yellow-ring: rgba(245, 197, 24, 0.5);
+  --atbs-ink: #0a0a0a;
   --atbs-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Inter", "Helvetica Neue",
     Arial, sans-serif;
   --atbs-display: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Syne", "Helvetica Neue",
@@ -139,67 +150,77 @@ body a:hover {
   background: transparent !important;
 }
 
-/* --- Step tabs: segmented control (Fabric / Style / Accents) ------------ */
+/* --- Left navigation rail (Fabric / Style / Accents) -------------------- */
 .menu_principal,
 .menu_principal.fabric,
 .menu_principal.config,
 .menu_principal.extra {
-  position: absolute !important;
+  position: fixed !important;
   left: 0 !important;
   right: auto !important;
-  top: 0 !important;
-  width: 100% !important;
-  max-width: var(--atbs-sidebar-w) !important;
-  min-height: var(--atbs-tabs-h) !important;
+  top: var(--atbs-header-h) !important;
+  bottom: 0 !important;
+  width: var(--atbs-rail-w) !important;
+  max-width: var(--atbs-rail-w) !important;
   height: auto !important;
-  z-index: 120000 !important;
+  z-index: 130000 !important;
   overflow: visible !important;
   margin: 0 !important;
-  padding: 12px 14px 14px !important;
+  padding: 18px 10px !important;
   box-sizing: border-box !important;
-  background: rgba(255, 255, 255, 0.98) !important;
-  backdrop-filter: blur(10px) saturate(1.2) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(1.2) !important;
-  border-bottom: 1px solid var(--atbs-border) !important;
+  background: #ffffff !important;
+  border-right: 1px solid var(--atbs-border) !important;
+  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.02) !important;
 }
 
 .menu_principal .options {
   position: relative !important;
-  flex-direction: row !important;
+  display: flex !important;
+  flex-direction: column !important;
   align-items: stretch !important;
-  justify-content: stretch !important;
+  justify-content: flex-start !important;
   margin: 0 !important;
   width: 100% !important;
   height: auto !important;
-  gap: 0 !important;
-  padding: 3px !important;
+  gap: 10px !important;
+  padding: 0 !important;
   box-sizing: border-box !important;
-  background: #eef0f3 !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
-  border-radius: 14px !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.75) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .menu_principal .options .option {
-  flex: 1 1 0 !important;
+  position: relative !important;
+  flex: 0 0 auto !important;
   margin: 0 !important;
   opacity: 1 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  border: none !important;
-  border-radius: 11px !important;
+  border: 1px solid transparent !important;
+  border-radius: 16px !important;
   box-sizing: border-box !important;
-  background: transparent !important;
-  min-height: 40px !important;
+  background: #f6f6f8 !important;
+  min-height: 74px !important;
+  padding: 10px 6px !important;
   cursor: pointer !important;
-  transition: background 0.22s cubic-bezier(0.4, 0, 0.2, 1), color 0.22s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease,
+    border-color 0.2s ease !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 
-.menu_principal .options .option:not(.active) {
-  opacity: 1 !important;
+.menu_principal .options .option::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) scaleY(0) !important;
+  width: 3px !important;
+  height: 26px !important;
+  border-radius: 0 3px 3px 0 !important;
+  background: var(--atbs-yellow) !important;
+  transition: transform 0.2s ease !important;
 }
 
 .menu_principal .options .option:not(.active) .title {
@@ -208,68 +229,83 @@ body a:hover {
 
 .menu_principal .options .option.active {
   opacity: 1 !important;
-  background: #111827 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.12) inset !important;
-  transform: translateZ(0) !important;
+  background: var(--atbs-yellow-soft) !important;
+  border-color: var(--atbs-yellow) !important;
+  box-shadow: 0 2px 10px rgba(245, 197, 24, 0.22) !important;
+}
+
+.menu_principal .options .option.active::before {
+  transform: translateY(-50%) scaleY(1) !important;
 }
 
 .menu_principal .options .option:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.55) !important;
+  background: #eef0f3 !important;
 }
 
 .menu_principal .options .option:hover:not(.active) .title {
-  color: #374151 !important;
+  color: var(--atbs-ink) !important;
 }
 
-.menu_principal .options .option.active:active {
-  transform: scale(0.98) !important;
+.menu_principal .options .option:active {
+  transform: scale(0.97) !important;
 }
 
 .menu_principal .options .option:focus-visible {
-  outline: 2px solid #111827 !important;
+  outline: 2px solid var(--atbs-yellow-strong) !important;
   outline-offset: 2px !important;
 }
 
-.menu_principal .option.step .image_opt_text > span {
-  display: none !important;
-}
-
+/* Rail icon (legacy jean SVGs reused, tinted) */
 .menu_principal .option.step .image_opt_text {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
+  gap: 7px !important;
+}
+
+.menu_principal .option.step .image_opt_text > span {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.menu_principal .option.step .image_opt_text > span img {
+  width: 24px !important;
+  height: 24px !important;
+  object-fit: contain !important;
+  opacity: 0.75 !important;
+  filter: grayscale(1) contrast(0.2) brightness(0.4) !important;
+}
+
+.menu_principal .options .option.active .image_opt_text > span img {
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 .menu_principal .options .option .title {
   margin-top: 0 !important;
   font-family: var(--atbs-font) !important;
-  font-size: 0.68rem !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.14em !important;
+  font-size: 0.62rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
   text-transform: uppercase !important;
+  text-align: center !important;
+  line-height: 1.2 !important;
   color: var(--atbs-text) !important;
 }
 
+.menu_principal .options .option .title.title_multi {
+  display: none !important;
+}
+
 .menu_principal .options .option.active .title {
-  color: #fff !important;
+  color: var(--atbs-ink) !important;
 }
 
-@media (max-width: 1320px) {
-  .menu_principal,
-  .menu_principal.fabric,
-  .menu_principal.config,
-  .menu_principal.extra {
-    max-width: var(--atbs-sidebar-w-md) !important;
-  }
-}
-
-@media (max-width: 1024px) {
-  .menu_principal,
-  .menu_principal.fabric,
-  .menu_principal.config,
-  .menu_principal.extra {
-    max-width: var(--atbs-sidebar-w-sm) !important;
+@media (max-width: 768px) {
+  :root {
+    --atbs-rail-w: 76px;
   }
 }
 
@@ -279,34 +315,47 @@ body a:hover {
  * and .box_opt { overflow-y:hidden }. Setting .box_opts to static broke panel
  * positioning and scroll. Rail (.container_options) stays above via z-index.
  */
+#fabric.active,
 #config.active,
 #extra.active {
   display: block !important;
-  position: absolute !important;
-  left: 0 !important;
-  top: 0 !important;
+  position: fixed !important;
+  left: var(--atbs-rail-w) !important;
+  top: var(--atbs-header-h) !important;
   bottom: 0 !important;
   width: var(--atbs-sidebar-w) !important;
-  max-width: min(var(--atbs-sidebar-w), 100vw) !important;
+  max-width: min(var(--atbs-sidebar-w), calc(100vw - var(--atbs-rail-w))) !important;
   box-sizing: border-box !important;
   background: #ffffff !important;
   overflow: hidden !important;
   border-right: 1px solid var(--atbs-border-strong) !important;
+  box-shadow: 18px 0 48px rgba(17, 24, 39, 0.12) !important;
+  z-index: 125000 !important;
+  transform: translateX(calc(-100% - var(--atbs-rail-w) - 4px)) !important;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: transform !important;
+}
+
+body.atbs-offcanvas-open #fabric.active,
+body.atbs-offcanvas-open #config.active,
+body.atbs-offcanvas-open #extra.active {
+  transform: translateX(0) !important;
 }
 
 @media (max-width: 1320px) {
+  #fabric.active,
   #config.active,
   #extra.active {
     width: var(--atbs-sidebar-w-md) !important;
-    max-width: min(var(--atbs-sidebar-w-md), 100vw) !important;
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
+  #fabric.active,
   #config.active,
   #extra.active {
-    width: var(--atbs-sidebar-w-sm) !important;
-    max-width: min(var(--atbs-sidebar-w-sm), 100vw) !important;
+    width: calc(100vw - var(--atbs-rail-w)) !important;
+    max-width: calc(100vw - var(--atbs-rail-w)) !important;
   }
 }
 
@@ -394,31 +443,6 @@ body a:hover {
   font-size: 0.65rem !important;
 }
 
-#fabric.active {
-  top: 0 !important;
-  bottom: 0 !important;
-  width: var(--atbs-sidebar-w) !important;
-  max-width: min(var(--atbs-sidebar-w), 100vw) !important;
-  padding-top: var(--atbs-col-pad-top) !important;
-  box-sizing: border-box !important;
-  background: #ffffff !important;
-  border-right: 1px solid var(--atbs-border-strong) !important;
-}
-
-@media (max-width: 1320px) {
-  #fabric.active {
-    width: var(--atbs-sidebar-w-md) !important;
-    max-width: min(var(--atbs-sidebar-w-md), 100vw) !important;
-  }
-}
-
-@media (max-width: 1024px) {
-  #fabric.active {
-    width: var(--atbs-sidebar-w-sm) !important;
-    max-width: min(var(--atbs-sidebar-w-sm), 100vw) !important;
-  }
-}
-
 #fabric.active .header_fabrics {
   border-bottom: 1px solid var(--atbs-border) !important;
   background: var(--atbs-surface-solid) !important;
@@ -503,8 +527,51 @@ body a:hover {
 
 /* --- Preview: reserve space for floating summary ------------------------ */
 #available_window.image_render.man_jacket {
-  padding-bottom: min(260px, 32vh) !important;
+  left: var(--atbs-rail-w) !important;
+  right: var(--atbs-preview-right) !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  padding-bottom: min(220px, 26vh) !important;
   box-sizing: border-box !important;
+  transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* When a panel is open, recenter the blazer in the visible canvas so both
+ * rotation arrows stay beside the garment (matches original push layout). */
+body.atbs-offcanvas-open #available_window.image_render.man_jacket {
+  left: calc(var(--atbs-rail-w) + var(--atbs-sidebar-w)) !important;
+}
+
+@media (max-width: 1320px) {
+  :root {
+    --atbs-preview-right: 320px;
+  }
+  body.atbs-offcanvas-open #available_window.image_render.man_jacket {
+    left: calc(var(--atbs-rail-w) + var(--atbs-sidebar-w-md)) !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --atbs-preview-right: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --atbs-preview-right: 16px;
+  }
+  /* On phones the sheet covers the canvas; don't shove the blazer off-screen,
+   * and let the preview use the full width (card sits below at bottom). */
+  body.atbs-offcanvas-open #available_window.image_render.man_jacket {
+    left: var(--atbs-rail-w) !important;
+  }
+  /* The garment is sized by available height; add vertical breathing room so it
+   * shrinks and leaves space at the sides for the rotation arrows. */
+  #available_window.image_render.man_jacket {
+    padding-top: 4vh !important;
+    padding-bottom: 30vh !important;
+  }
 }
 
 /* --- Right summary: Custom jacket, price, Next (floating card) ---------- */
@@ -516,8 +583,8 @@ body a:hover {
   top: auto !important;
   left: auto !important;
   height: auto !important;
-  width: min(320px, calc(100vw - var(--atbs-sidebar-w) - 40px)) !important;
-  max-width: min(320px, calc(100vw - var(--atbs-sidebar-w) - 40px)) !important;
+  width: min(320px, calc(100vw - var(--atbs-rail-w) - 40px)) !important;
+  max-width: min(320px, calc(100vw - var(--atbs-rail-w) - 40px)) !important;
   z-index: 110000 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -764,8 +831,8 @@ body a:hover {
 @media (max-width: 1024px) {
   .personalize.man_jacket .action_column,
   .personalize .action_column {
-    width: min(300px, calc(100vw - var(--atbs-sidebar-w-sm) - 24px)) !important;
-    max-width: min(300px, calc(100vw - var(--atbs-sidebar-w-sm) - 24px)) !important;
+    width: min(300px, calc(100vw - var(--atbs-rail-w) - 24px)) !important;
+    max-width: min(300px, calc(100vw - var(--atbs-rail-w) - 24px)) !important;
   }
 }
 
@@ -774,8 +841,165 @@ body a:hover {
   display: none !important;
 }
 
-@media (max-width: 1100px) {
+/* ====================================================================== */
+/* Offcanvas shell: backdrop, close button, yellow CTAs (redesign v12)     */
+/* ====================================================================== */
+
+/* Backdrop disabled — preview stays interactive while a panel is open */
+#atbs-offcanvas-backdrop {
+  display: none !important;
+}
+
+/* Close button injected into each offcanvas panel.
+ * Kept on the LEFT so it never collides with the legacy ".back" arrow,
+ * which legacy positions at the top-right of every drill-down (.box_opt). */
+.atbs-offcanvas-close {
+  position: absolute !important;
+  top: 10px !important;
+  left: 10px !important;
+  right: auto !important;
+  width: 34px !important;
+  height: 34px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid var(--atbs-border-strong) !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  color: var(--atbs-ink) !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  z-index: 2147480000 !important;
+  padding: 0 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease !important;
+}
+
+.atbs-offcanvas-close:hover {
+  background: var(--atbs-yellow-soft) !important;
+  border-color: var(--atbs-yellow) !important;
+}
+
+.atbs-offcanvas-close:active {
+  transform: scale(0.92) !important;
+}
+
+/* Keep the fabric header clear of the close button (now on the left) */
+#fabric.active .header_fabrics {
+  padding-left: 52px !important;
+}
+
+/* --- Preview rotation arrows (front / back / on-model) ----------------- */
+/* Positioned by atbs-shell.js relative to the garment's real bounding box so
+ * they hug the blazer on every screen size and in both panel states.
+ * z-index sits above the summary card (110000) but below the offcanvas
+ * panel (125000) so the left arrow tucks behind an open panel. */
+.personalize #available_window .view_arrow {
+  z-index: 120000 !important;
+  transition: opacity 0.2s ease, background-color 0.2s ease !important;
+}
+
+/* Hide until JS has measured & placed them (avoids a flash at the legacy spot) */
+body:not(.atbs-arrows-ready) #available_window .view_arrow {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Make the arrows read as real next/previous buttons (legacy was nearly
+ * invisible: transparent fill + thin gray ring on a light canvas). */
+.personalize #available_window .view_arrow:after {
+  width: 42px !important;
+  height: 42px !important;
+  background-color: var(--atbs-yellow-soft) !important;
+  border: 1px solid var(--atbs-yellow) !important;
+  background-size: 12px 12px !important;
+  box-shadow: 0 4px 14px rgba(245, 197, 24, 0.22) !important;
+}
+
+.personalize #available_window .view_arrow:hover:after {
+  border-color: var(--atbs-yellow-strong) !important;
+  background-color: var(--atbs-yellow) !important;
+}
+
+/* --- Yellow primary CTA (Continue / Next / Add) ------------------------- */
+.action_column .next .step_next,
+.action_column .step_next,
+.personalize .step_next,
+.apply_button {
+  background: var(--atbs-yellow) !important;
+  color: var(--atbs-ink) !important;
+  border: 1px solid var(--atbs-yellow-strong) !important;
+  font-weight: 700 !important;
+}
+
+.action_column .next .step_next:hover,
+.action_column .step_next:hover,
+.personalize .step_next:hover,
+.apply_button:hover {
+  background: var(--atbs-yellow-strong) !important;
+  color: var(--atbs-ink) !important;
+}
+
+.action_column .next .step_next *,
+.action_column .step_next * {
+  color: var(--atbs-ink) !important;
+}
+
+/* --- Yellow selected states for options & swatches --------------------- */
+#fabric .fabric_box.checked,
+#fabric .fabric_box.selected {
+  outline: 2px solid var(--atbs-yellow) !important;
+  outline-offset: 1px !important;
+  border-radius: 12px !important;
+}
+
+/* Selection is indicated by the yellow check glyph only — no box/tile
+ * highlight (the legacy trigger has a fixed height with overflowing label,
+ * so a box looked misaligned). */
+#config.active .option_trigger.active,
+#extra.active .option_trigger.active,
+.personalize .subbox_opt .option_trigger.active {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  color: var(--atbs-ink) !important;
+}
+
+/* Yellow check glyph — large & high-contrast on a white disc */
+#config.active .option_trigger.active:after,
+#extra.active .option_trigger.active:after,
+.personalize .subbox_opt .option_trigger.active:after {
+  left: 6px !important;
+  top: 2px !important;
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  text-align: center !important;
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  color: var(--atbs-yellow-strong) !important;
+  background: #fff !important;
+  border-radius: 50% !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18) !important;
+  z-index: 2 !important;
+}
+
+.personalize .options_render li a.active {
+  box-shadow: inset 0 0 0 2px var(--atbs-yellow) !important;
+  border-radius: 10px !important;
+}
+
+/* Inner option rail (Style / Accents icon column) active marker */
+#config.active .container_options .options_list li.active,
+#extra.active .container_options .options_list li.active {
+  box-shadow: inset 3px 0 0 var(--atbs-yellow) !important;
+  background: var(--atbs-yellow-soft) !important;
+}
+
+/* --- Action column placement relative to rail -------------------------- */
+@media (max-width: 1024px) {
   .menu_principal .options .option .title {
-    font-size: 0.68rem !important;
+    font-size: 0.6rem !important;
   }
 }

@@ -14,8 +14,9 @@ const htmlPath = join(
 );
 
 const ATBS_THEME =
-  '  <link rel="stylesheet" href="/css/atbs-theme.css?v=11" />';
+  '  <link rel="stylesheet" href="/css/atbs-theme.css?v=21" />';
 const ATBS_DEMO = '  <script defer src="/js/atbs-demo.js?v=8"></script>';
+const ATBS_SHELL = '  <script defer src="/js/atbs-shell.js?v=4"></script>';
 const MIRROR_3D =
   '    <script type="text/javascript" defer src="/js/1780997280/mirror_3d_fallback.js?v=51" charset="utf-8"></script>';
 
@@ -53,7 +54,27 @@ if (!html.includes("mirror_3d_fallback.js")) {
 }
 
 if (!html.includes("atbs-theme.css")) {
-  html = html.replace("</body>", `${ATBS_THEME}\n${ATBS_DEMO}\n</body>`);
+  html = html.replace(
+    "</body>",
+    `${ATBS_THEME}\n${ATBS_DEMO}\n${ATBS_SHELL}\n</body>`,
+  );
+} else {
+  // Already patched: keep cache-busting versions current.
+  html = html.replace(
+    /<link rel="stylesheet" href="\/css\/atbs-theme\.css\?v=\d+" \/>/,
+    ATBS_THEME.trim(),
+  );
+  if (!html.includes("atbs-shell.js")) {
+    html = html.replace(
+      /(<script defer src="\/js\/atbs-demo\.js\?v=\d+"><\/script>)/,
+      `$1\n${ATBS_SHELL}`,
+    );
+  } else {
+    html = html.replace(
+      /<script defer src="\/js\/atbs-shell\.js\?v=\d+"><\/script>/,
+      ATBS_SHELL.trim(),
+    );
+  }
 }
 
 writeFileSync(htmlPath, html);

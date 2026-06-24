@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { BlazerLayerStack } from "./BlazerLayerStack";
 import { EmbroideryPicker } from "./EmbroideryPicker";
-import { EMBROIDERY_DESIGNS } from "@/lib/embroidery/designs";
+import {
+  EMBROIDERY_DESIGNS,
+  findEmbroideryDesignById,
+  getBackSpotDesigns,
+} from "@/lib/embroidery/designs";
 import type { EmbroideryDesign } from "@/lib/embroidery/designs";
 import {
   canPlaceEmbroidery,
@@ -18,12 +22,13 @@ import {
   upsertEmbroideryAtPlacement,
 } from "@/lib/embroidery/storage";
 import { getEmbroideryPlacementById } from "@/lib/embroidery/placements";
-import type { BlazerDraft, EmbroideryView } from "@/lib/embroidery/types";
+import type { BlazerDraft, BackEmbroideryMode, EmbroideryView } from "@/lib/embroidery/types";
 
 export function EmbroideryStudio() {
   const [draft, setDraft] = useState<BlazerDraft | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [view, setView] = useState<EmbroideryView>("front");
+  const [backMode, setBackMode] = useState<BackEmbroideryMode>("free");
   const [selectedDesignByView, setSelectedDesignByView] = useState<
     Partial<Record<EmbroideryView, string>>
   >({});
@@ -47,10 +52,57 @@ export function EmbroideryStudio() {
   const selectedId = selectedDesignByView[view];
   const viewLabel = view === "front" ? "front" : "back";
 
+  const pickerDesigns = useMemo(() => {
+    if (view === "front" || (view === "back" && backMode === "free")) {
+      return EMBROIDERY_DESIGNS;
+    }
+    if (activePlacementId) {
+      return getBackSpotDesigns(activePlacementId);
+    }
+    return [];
+  }, [view, backMode, activePlacementId]);
+
+  const resetBackSpotSelection = useCallback(() => {
+    setActivePlacementId(undefined);
+    setSelectedDesignByView((current) => ({ ...current, back: undefined }));
+    setNotice(null);
+  }, []);
+
+  const handleBackModeChange = useCallback(
+    (mode: BackEmbroideryMode) => {
+      setBackMode(mode);
+      resetBackSpotSelection();
+    },
+    [resetBackSpotSelection]
+  );
+
   const handleSelect = useCallback(
     (design: EmbroideryDesign) => {
       setNotice(null);
       setSelectedDesignByView((current) => ({ ...current, [view]: design.id }));
+
+      if (view === "back" && backMode === "spots") {
+        if (!activePlacementId) return;
+
+        const check = canPlaceEmbroidery(
+          view,
+          design.id,
+          activePlacementId,
+          embroideries
+        );
+        if (!check.ok) {
+          setNotice(check.reason);
+          return;
+        }
+
+        const updated = upsertEmbroideryAtPlacement(view, {
+          designId: design.id,
+          src: design.src,
+          placementId: activePlacementId,
+        });
+        if (updated) setDraft(updated);
+        return;
+      }
 
       if (!activePlacementId) return;
 
@@ -72,7 +124,7 @@ export function EmbroideryStudio() {
       });
       if (updated) setDraft(updated);
     },
-    [activePlacementId, embroideries, view]
+    [activePlacementId, backMode, embroideries, view]
   );
 
   const handleClear = useCallback(() => {
@@ -90,10 +142,15 @@ export function EmbroideryStudio() {
       setNotice(null);
       setActivePlacementId(placementId);
 
+      if (view === "back" && backMode === "spots") {
+        setSelectedDesignByView((current) => ({ ...current, back: undefined }));
+        return;
+      }
+
       const designId = selectedDesignByView[view];
       if (!designId) return;
 
-      const design = EMBROIDERY_DESIGNS.find((item) => item.id === designId);
+      const design = findEmbroideryDesignById(designId);
       if (!design) return;
 
       const check = canPlaceEmbroidery(view, designId, placementId, embroideries);
@@ -109,7 +166,7 @@ export function EmbroideryStudio() {
       });
       if (updated) setDraft(updated);
     },
-    [embroideries, selectedDesignByView, view]
+    [backMode, embroideries, selectedDesignByView, view]
   );
 
   const handleBackAdjust = useCallback(
@@ -147,15 +204,24 @@ export function EmbroideryStudio() {
     activePlacementId
   )?.label;
 
-  const hint = !selectedId
-    ? `Select a design first, then tap a marker on the ${viewLabel}.`
-    : placementCount >= maxPlacements && !activePlacementId
-      ? `All ${viewLabel} placements are full. Tap a marker to replace that spot.`
-      : activePlacementId
-        ? `Tap "${activePlacementLabel}" again or choose another marker to place ${selectedId ? "your design" : "a design"}.`
-        : view === "back"
-          ? "Tap the upper-back marker to place your design. Drag to adjust after placing."
-          : "Tap a chest or pocket marker to place your design.";
+  const hint =
+    view === "back" && backMode === "spots"
+      ? !activePlacementId
+        ? "Tap Back center or Bottom back on the blazer to choose a spot."
+        : !selectedId
+          ? `Choose a design for ${activePlacementLabel ?? "this spot"} — it will be placed automatically.`
+          : activePlacementId === "back-upper-center"
+            ? "Back center design placed — drag to move or use the corner handle to resize."
+            : `Design placed on ${activePlacementLabel}. Tap another spot or pick a different design to replace.`
+      : !selectedId
+        ? `Select a design first, then tap a marker on the ${viewLabel}.`
+        : placementCount >= maxPlacements && !activePlacementId
+          ? `All ${viewLabel} placements are full. Tap a marker to replace that spot.`
+          : activePlacementId
+            ? `Tap "${activePlacementLabel}" again or choose another marker to place your design.`
+            : view === "back"
+              ? "Tap the upper-back marker to place your design. Drag to adjust after placing."
+              : "Tap a chest or pocket marker to place your design.";
 
   return (
     <div className="embroidery-studio">
@@ -168,10 +234,13 @@ export function EmbroideryStudio() {
 
       <div className="embroidery-studio__main">
         <EmbroideryPicker
-          designs={EMBROIDERY_DESIGNS}
+          designs={pickerDesigns}
           selectedId={selectedId}
           placementCount={placementCount}
           view={view}
+          spotsMode={view === "back" && backMode === "spots"}
+          awaitingSpot={view === "back" && backMode === "spots" && !activePlacementId}
+          activeSpotLabel={activePlacementLabel}
           onSelect={handleSelect}
           onClear={handleClear}
         />
@@ -182,11 +251,35 @@ export function EmbroideryStudio() {
               {notice}
             </p>
           ) : null}
+          {view === "back" ? (
+            <div className="embroidery-preview__mode" role="group" aria-label="Back placement mode">
+              <span className="embroidery-preview__mode-label">Placement</span>
+              <div className="embroidery-preview__mode-toggle">
+                <button
+                  type="button"
+                  className={`embroidery-preview__mode-btn${backMode === "free" ? " is-active" : ""}`}
+                  onClick={() => handleBackModeChange("free")}
+                  aria-pressed={backMode === "free"}
+                >
+                  Free
+                </button>
+                <button
+                  type="button"
+                  className={`embroidery-preview__mode-btn${backMode === "spots" ? " is-active" : ""}`}
+                  onClick={() => handleBackModeChange("spots")}
+                  aria-pressed={backMode === "spots"}
+                >
+                  Spots
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className="embroidery-preview__frame">
             <BlazerLayerStack
               layers={layers}
               embroideries={embroideries}
               view={view}
+              backMode={view === "back" ? backMode : undefined}
               hasDesignSelected={Boolean(selectedId)}
               activePlacementId={activePlacementId}
               onHotspotSelect={handlePlace}

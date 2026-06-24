@@ -6,6 +6,8 @@ export type BlazerLayer = {
 
 export type EmbroideryView = "front" | "back";
 
+export type BackEmbroideryMode = "free" | "spots";
+
 export type EmbroiderySelection = {
   id: string;
   designId: string;

@@ -128,6 +128,21 @@
   background: #f9fafb;
 }
 
+.embroidery-picker__empty {
+  padding: 28px 16px;
+  border: 1px dashed var(--emb-border);
+  border-radius: 12px;
+  background: #fafafa;
+  text-align: center;
+}
+
+.embroidery-picker__empty p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--emb-muted);
+  line-height: 1.5;
+}
+
 .embroidery-preview {
   display: flex;
   flex-direction: column;
@@ -210,6 +225,11 @@
   box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.14);
 }
 
+.embroidery-preview__hotspot.is-bottom {
+  width: 40px;
+  height: 40px;
+}
+
 .embroidery-preview__hotspot:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -231,6 +251,36 @@
   position: absolute;
   transform: translate(-50%, -50%);
   user-select: none;
+}
+
+.embroidery-preview__overlay-wrap.is-bottom-anchored {
+  line-height: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.embroidery-preview__overlay-wrap.is-bottom-anchored[data-design-id="back-bottom-1"] {
+  z-index: 192;
+  left: 53%;
+  bottom: 2%;
+  width: 55%;
+}
+
+.embroidery-preview__overlay-wrap.is-bottom-anchored[data-design-id="back-bottom-2"] {
+  z-index: 192;
+  left: 52%;
+  bottom: 2%;
+  width: 54%;
+}
+
+.embroidery-preview__overlay-wrap.is-bottom-anchored .embroidery-preview__overlay {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  object-position: bottom center;
+  /* PNGs ship on black — lighten hides black so flames sit on the fabric */
+  mix-blend-mode: lighten;
 }
 
 .embroidery-preview__overlay-wrap.is-draggable {
@@ -268,6 +318,49 @@
   inset: 5px;
   border-right: 2px solid #111827;
   border-bottom: 2px solid #111827;
+}
+
+.embroidery-preview__mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  width: min(100%, 600px);
+}
+
+.embroidery-preview__mode-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--emb-muted);
+}
+
+.embroidery-preview__mode-toggle {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--emb-border);
+  border-radius: 999px;
+  background: #fff;
+}
+
+.embroidery-preview__mode-btn {
+  min-width: 72px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--emb-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.embroidery-preview__mode-btn.is-active {
+  background: var(--emb-accent);
+  color: #fff;
 }
 
 .embroidery-preview__hint {

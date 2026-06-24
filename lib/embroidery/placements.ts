@@ -9,6 +9,12 @@ export type EmbroideryPlacement = {
   width: string;
   zIndex?: number;
   enabled?: boolean;
+  /** Preset spot for guided back placement mode. */
+  spot?: boolean;
+  /** How the overlay is anchored to left/top (default: center). */
+  anchor?: "center" | "bottom";
+  /** Distance from preview bottom when anchor is bottom (overrides top for overlay). */
+  bottom?: string;
 };
 
 export const EMBROIDERY_PLACEMENTS: Record<EmbroideryView, EmbroideryPlacement[]> = {
@@ -41,11 +47,23 @@ export const EMBROIDERY_PLACEMENTS: Record<EmbroideryView, EmbroideryPlacement[]
   back: [
     {
       id: "back-upper-center",
-      label: "Upper back",
+      label: "Back center",
       view: "back",
       left: "50%",
-      top: "23%",
-      width: "16%",
+      top: "21%",
+      width: "18%",
+      spot: true,
+    },
+    {
+      id: "back-bottom",
+      label: "Bottom back",
+      view: "back",
+      left: "50%",
+      top: "97%",
+      bottom: "3.6%",
+      width: "50%",
+      anchor: "bottom",
+      spot: true,
     },
   ],
 };
@@ -57,5 +75,17 @@ export function getEmbroideryPlacementById(
   if (!placementId) return undefined;
   return EMBROIDERY_PLACEMENTS[view].find(
     (placement) => placement.id === placementId && placement.enabled !== false
+  );
+}
+
+export function getBackSpotPlacements(): EmbroideryPlacement[] {
+  return EMBROIDERY_PLACEMENTS.back.filter(
+    (placement) => placement.spot === true && placement.enabled !== false
+  );
+}
+
+export function getFreeBackPlacement(): EmbroideryPlacement | undefined {
+  return EMBROIDERY_PLACEMENTS.back.find(
+    (placement) => placement.id === "back-upper-center" && placement.enabled !== false
   );
 }

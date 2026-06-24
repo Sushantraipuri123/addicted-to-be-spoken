@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
+import type { BackEmbroideryMode } from "@/lib/embroidery/types";
 import type {
   BlazerLayer,
   EmbroiderySelection,
@@ -13,6 +14,7 @@ import { getOccupiedPlacementIds } from "@/lib/embroidery/limits";
 import {
   EMBROIDERY_PLACEMENTS,
   getEmbroideryPlacementById,
+  type EmbroideryPlacement,
 } from "@/lib/embroidery/placements";
 import { MirrorLayerImg } from "./MirrorLayerImg";
 
@@ -20,6 +22,7 @@ type BlazerLayerStackProps = {
   layers: BlazerLayer[];
   embroideries: EmbroiderySelection[];
   view: EmbroideryView;
+  backMode?: BackEmbroideryMode;
   hasDesignSelected: boolean;
   activePlacementId?: string;
   onHotspotSelect: (placementId: string) => void;
@@ -78,7 +81,8 @@ function geometryEquals(a: Geometry | null, b: Geometry | null): boolean {
 
 function resolveGeometry(
   view: EmbroideryView,
-  embroidery: EmbroiderySelection
+  embroidery: EmbroiderySelection,
+  useCustom: boolean
 ): Geometry | undefined {
   const placement = getEmbroideryPlacementById(view, embroidery.placementId);
   if (!placement) return undefined;
@@ -89,7 +93,7 @@ function resolveGeometry(
     width: parsePercent(placement.width),
   };
 
-  if (view !== "back" || !embroidery.custom) {
+  if (!useCustom || view !== "back" || !embroidery.custom) {
     return fallback;
   }
 
@@ -274,10 +278,110 @@ function BackEmbroideryOverlay({
   );
 }
 
+function measureGarmentHemBottomPct(frame: HTMLDivElement): number {
+  const stackRect = frame.getBoundingClientRect();
+  if (!stackRect.height) return 3.6;
+
+  const layerEls = frame.querySelectorAll<HTMLElement>("img.embroidery-preview__layer");
+  if (!layerEls.length) return 3.6;
+
+  let lowestBottom = stackRect.top;
+  layerEls.forEach((el) => {
+    lowestBottom = Math.max(lowestBottom, el.getBoundingClientRect().bottom);
+  });
+
+  const gapPct = ((stackRect.bottom - lowestBottom) / stackRect.height) * 100;
+  // Jacket PNGs fill the frame; visual hem sits slightly above the frame bottom.
+  if (gapPct < 0.5) return 3.6;
+  return gapPct + 0.35;
+}
+
+function useGarmentHemBottom(
+  frameRef: React.RefObject<HTMLDivElement | null>,
+  layerKey: string
+): number {
+  const [hemBottomPct, setHemBottomPct] = useState(3.6);
+
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+
+    const measure = () => {
+      setHemBottomPct(measureGarmentHemBottomPct(frame));
+    };
+
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(frame);
+
+    const layerEls = frame.querySelectorAll<HTMLElement>("img.embroidery-preview__layer");
+    layerEls.forEach((el) => {
+      ro.observe(el);
+      el.addEventListener("load", measure);
+    });
+
+    return () => {
+      ro.disconnect();
+      layerEls.forEach((el) => el.removeEventListener("load", measure));
+    };
+  }, [frameRef, layerKey]);
+
+  return hemBottomPct;
+}
+
+function FixedEmbroideryOverlay({
+  embroidery,
+  placement,
+  geometry,
+  zIndex,
+}: {
+  embroidery: EmbroiderySelection;
+  placement: EmbroideryPlacement;
+  geometry: Geometry;
+  zIndex: number;
+}) {
+  const isBottom = placement.anchor === "bottom";
+
+  return (
+    <div
+      className={`embroidery-preview__overlay-wrap${isBottom ? " is-bottom-anchored" : ""}`}
+      data-placement={placement.id}
+      data-design-id={embroidery.designId}
+      style={
+        isBottom
+          ? undefined
+          : {
+              zIndex,
+              left: toPercent(geometry.left),
+              top: toPercent(geometry.top),
+              width: toPercent(geometry.width),
+              transform: "translate(-50%, -50%)",
+            }
+      }
+    >
+      <img
+        src={embroidery.src}
+        alt="Embroidery overlay"
+        className="embroidery-preview__overlay"
+        draggable={false}
+      />
+    </div>
+  );
+}
+
+function isDraggableBackPlacement(
+  backMode: BackEmbroideryMode,
+  placementId: string
+): boolean {
+  return backMode === "free" || placementId === "back-upper-center";
+}
+
 export function BlazerLayerStack({
   layers,
   embroideries,
   view,
+  backMode = "free",
   hasDesignSelected,
   activePlacementId,
   onHotspotSelect,
@@ -293,11 +397,24 @@ export function BlazerLayerStack({
     [sorted]
   );
   const embroideryBaseZ = maxLayerZ + 10;
+  const layerKey = sorted.map((l) => l.src).join("|");
+  const garmentHemBottomPct = useGarmentHemBottom(frameRef, layerKey);
 
-  const placements = EMBROIDERY_PLACEMENTS[view].filter(
-    (placement) => placement.enabled !== false
-  );
+  const placements = useMemo(() => {
+    const all = EMBROIDERY_PLACEMENTS[view].filter(
+      (placement) => placement.enabled !== false
+    );
+    if (view === "back" && backMode === "free") {
+      return all.filter((placement) => placement.id === "back-upper-center");
+    }
+    if (view === "back" && backMode === "spots") {
+      return all.filter((placement) => placement.spot === true);
+    }
+    return all;
+  }, [view, backMode]);
+
   const occupiedPlacementIds = getOccupiedPlacementIds(embroideries);
+  const isSpotsBack = view === "back" && backMode === "spots";
 
   return (
     <div className="embroidery-preview__stack" aria-label="Blazer preview" ref={frameRef}>
@@ -311,12 +428,16 @@ export function BlazerLayerStack({
       ))}
       {embroideries.map((embroidery, index) => {
         const placement = getEmbroideryPlacementById(view, embroidery.placementId);
-        const geometry = resolveGeometry(view, embroidery);
+        const draggableBack =
+          view === "back" &&
+          isDraggableBackPlacement(backMode, embroidery.placementId);
+        const useCustom = draggableBack;
+        const geometry = resolveGeometry(view, embroidery, useCustom);
         if (!placement || !geometry) return null;
 
         const zIndex = embroideryBaseZ + index;
 
-        if (view === "back") {
+        if (draggableBack) {
           return (
             <BackEmbroideryOverlay
               key={embroidery.id}
@@ -334,39 +455,40 @@ export function BlazerLayerStack({
         }
 
         return (
-          <div
+          <FixedEmbroideryOverlay
             key={embroidery.id}
-            className="embroidery-preview__overlay-wrap"
-            style={{
-              zIndex,
-              left: toPercent(geometry.left),
-              top: toPercent(geometry.top),
-              width: toPercent(geometry.width),
-            }}
-          >
-            <img
-              src={embroidery.src}
-              alt="Embroidery overlay"
-              className="embroidery-preview__overlay"
-              draggable={false}
-            />
-          </div>
+            embroidery={embroidery}
+            placement={placement}
+            geometry={geometry}
+            zIndex={zIndex}
+          />
         );
       })}
-      <div className="embroidery-preview__hotspots" aria-label="Placement markers">
+      <div className="embroidery-preview__hotspots" aria-label="Placementmarkers">
         {placements.map((placement) => {
           const isOccupied = occupiedPlacementIds.has(placement.id);
           const isSelected = placement.id === activePlacementId;
+          const hotspotDisabled = isSpotsBack ? false : !hasDesignSelected;
+          const isBottomHotspot = placement.id === "back-bottom";
           return (
             <button
               key={placement.id}
               type="button"
-              className={`embroidery-preview__hotspot${isSelected ? " is-selected" : ""}${isOccupied ? " is-occupied" : ""}`}
-              style={{ left: placement.left, top: placement.top }}
+              className={`embroidery-preview__hotspot${isSelected ? " is-selected" : ""}${isOccupied ? " is-occupied" : ""}${placement.id === "back-bottom" ? " is-bottom" : ""}`}
+              style={
+                isBottomHotspot
+                  ? {
+                      left: placement.left,
+                      bottom: `calc(${garmentHemBottomPct}% + 0.3%)`,
+                      top: "auto",
+                      transform: "translate(-50%, 50%)",
+                    }
+                  : { left: placement.left, top: placement.top }
+              }
               onClick={() => onHotspotSelect(placement.id)}
               aria-label={`Place embroidery on ${placement.label}`}
               title={placement.label}
-              disabled={!hasDesignSelected}
+              disabled={hotspotDisabled}
             >
               <span aria-hidden>{placement.label.slice(0, 1)}</span>
             </button>
